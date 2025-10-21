@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarketGO - Portada</title>
+    <link rel="stylesheet" href="Styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <h1 class="logo">MarketGO</h1>
+            <nav class="nav-actions">
+                <button class="btn btn-ghost" id="open-login">Iniciar sesión</button>
+                <button class="btn btn-primary" id="open-register">Registrarse</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="hero">
+        <div class="container hero-inner">
+            <div class="hero-content">
+                <h2 class="hero-title">Compra y vende cerca de ti</h2>
+                <p class="hero-sub">Explora productos, chatea con vendedores y administra tus ventas — todo en un solo lugar.</p>
+                <div class="hero-cta">
+                    <button class="btn btn-primary" id="hero-register">Comenzar</button>
+                    <a class="link-ghost" id="hero-learn">¿Cómo funciona?</a>
+                </div>
+            </div>
+            <div class="hero-illustration" aria-hidden="false">
+                <!-- Imagen de portada relacionada con marketplace -->
+                <img class="hero-cover" src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80" alt="Mercado local - compra y venta" />
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Login -->
+    <div class="modal" id="modal-login" aria-hidden="true">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="login-title">
+            <button class="modal-close" data-close aria-label="Cerrar">×</button>
+            <h3 id="login-title">Iniciar sesión</h3>
+            <form class="form" id="form-login">
+                <label>
+                    Correo o usuario
+                    <input type="text" name="user" required>
+                </label>
+                <label>
+                    Contraseña
+                    <input type="password" name="password" required>
+                </label>
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">Entrar</button>
+                    <button class="btn btn-ghost" type="button" data-close>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Register -->
+    <div class="modal" id="modal-register" aria-hidden="true">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="register-title">
+            <button class="modal-close" data-close aria-label="Cerrar">×</button>
+            <h3 id="register-title">Crear cuenta</h3>
+            <form class="form" id="form-register">
+                <label>
+                    Nombre
+                    <input type="text" name="name" required>
+                </label>
+                <label>
+                    Correo electrónico
+                    <input type="email" name="email" required>
+                </label>
+                <label>
+                    Contraseña
+                    <input type="password" name="password" required>
+                </label>
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">Registrarse</button>
+                    <button class="btn btn-ghost" type="button" data-close>Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Helpers para abrir/cerrar modales
+        function toggleModal(modal, show) {
+            if (!modal) return;
+            modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+            document.body.classList.toggle('no-scroll', show);
+        }
+
+        function setupModal(openBtnId, modalId) {
+            const openBtn = document.getElementById(openBtnId);
+            const modal = document.getElementById(modalId);
+            if (!openBtn || !modal) return;
+            openBtn.addEventListener('click', () => toggleModal(modal, true));
+            modal.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => toggleModal(modal, false)));
+            // close with Esc
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') toggleModal(modal, false);
+            });
+        }
+
+        setupModal('open-login', 'modal-login');
+        setupModal('open-register', 'modal-register');
+        setupModal('hero-register', 'modal-register');
+
+        // Prevención simple en envíos (solo muestra alert) — puedes reemplazar con lógica real
+        document.getElementById('form-login').addEventListener('submit', function(e){
+            e.preventDefault();
+            alert('Simulación: inicio de sesión (aquí iría la llamada al backend)');
+            toggleModal(document.getElementById('modal-login'), false);
+        });
+        document.getElementById('form-register').addEventListener('submit', function(e){
+            e.preventDefault();
+            alert('Simulación: registro completado');
+            toggleModal(document.getElementById('modal-register'), false);
+        });
+    </script>
+    <script src="CrearUsuario.js"></script>
+</body>
+</html>
