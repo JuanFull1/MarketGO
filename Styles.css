@@ -1,0 +1,106 @@
+/* Styles.css */
+
+:root{
+	--fb-blue-600:#1877f2; /* Facebook blue */
+	--fb-blue-500:#2d8bf8;
+	--fb-gray-100:#f2f4f7;
+	--fb-gray-300:#e4e6ea;
+	--text-900:#0f172a;
+}
+
+/* Asegurar que padding/border entren en el width calculado */
+html{box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+
+body {
+	margin: 0;
+	font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	color: var(--text-900);
+	background: linear-gradient(180deg, #f6f8fb 0%, #ffffff 100%);
+	-webkit-font-smoothing: antialiased;
+}
+
+.container {
+	width: 92%;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.site-header {
+	padding: 18px 0;
+	background: transparent;
+}
+.header-inner{
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+}
+.logo{
+	margin:0;
+	font-size:1.25rem;
+	font-weight:800;
+	color:var(--fb-blue-600);
+	letter-spacing:0.4px;
+}
+.nav-actions button{margin-left:10px}
+
+.hero{
+	padding:56px 0;
+}
+.hero-inner{
+	display:flex;
+	gap:32px;
+	align-items:center;
+	justify-content:space-between;
+}
+.hero-content{flex:1}
+.hero-title{
+	font-size:2.25rem;
+	margin:0 0 12px 0;
+	color:var(--text-900);
+}
+.hero-sub{margin:0 0 20px 0; color:#475569}
+.hero-cta{display:flex;gap:12px;align-items:center}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:10px;border:1px solid transparent;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+.btn-primary{background:linear-gradient(90deg,var(--fb-blue-600),var(--fb-blue-500));color:white;border-color:transparent}
+.btn-ghost{background:transparent;color:#475569;border-color:transparent}
+.link-ghost{color:#4b5563;text-decoration:underline;cursor:pointer}
+
+.hero-illustration{width:360px;flex:0 0 360px}
+.card-sample{background:linear-gradient(180deg,#ffffff,#f8fafc);padding:18px;border-radius:14px;box-shadow:0 10px 30px rgba(16,24,40,0.08)}
+.card-image{height:180px;background:linear-gradient(90deg,#eef3ff,#e4f0ff);border-radius:10px}
+.card-line{height:12px;background:var(--fb-gray-300);margin-top:14px;border-radius:6px}
+.card-line.short{width:60%}
+/* imagen hero */
+.hero-cover{width:100%;height:100%;object-fit:cover;border-radius:12px}
+
+/* Modal styles */
+.no-scroll{overflow:hidden}
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;visibility:visible}
+.modal[aria-hidden="true"]{visibility:hidden;pointer-events:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(2,6,23,0.5)}
+.modal-panel{position:relative;z-index:10;background:#fff;border-radius:14px;padding:22px;width:96%;max-width:460px;box-shadow:0 18px 50px rgba(15,23,42,0.12)}
+.modal-close{position:absolute;right:14px;top:10px;background:transparent;border:0;font-size:22px;cursor:pointer}
+.form label{display:block;margin-bottom:10px;font-size:0.97rem}
+.form input{width:100%;max-width:100%;padding:14px 14px;border-radius:10px;border:1px solid var(--fb-gray-300);background:#fff;font-size:1rem;height:48px;box-sizing:border-box}
+.form select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--fb-gray-300);height:48px}
+.form textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--fb-gray-300);min-height:96px}
+
+/* Asegura que los formularios no excedan el panel en layouts estrechos */
+.modal-panel .form{width:100%;max-width:100%}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+
+/* Mejora extra: focus visible para inputs y botones */
+.form input:focus{outline:3px solid rgba(24,119,242,0.12);box-shadow:0 4px 14px rgba(37,99,235,0.08)}
+.btn:focus{outline:3px solid rgba(37,99,235,0.12)}
+
+/* Responsivo */
+@media (max-width:900px){
+	.hero-inner{flex-direction:column-reverse;align-items:stretch}
+	.hero-illustration{width:100%;flex-basis:auto}
+	.hero-title{font-size:1.35rem}
+	.hero{padding:36px 0}
+}
+
+
