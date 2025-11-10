@@ -72,9 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 
       // Evitar reutilizar el mismo nombre de parámetro (algunos drivers MySQL no lo permiten)
       $st = $pdo->prepare("
+<<<<<<< HEAD
         SELECT id, nombre, password_hash, rol_sistema
         FROM perfil_usuario
         WHERE username = :u OR correo = :u2
+=======
+        SELECT id, nombre, password_hash
+        FROM perfil_usuario
+        WHERE username = :u OR correo = :u
+>>>>>>> e7e90fad002d08f2f3d1b675819258015becfd25
         LIMIT 1
       ");
       $st->execute(['u' => $user, 'u2' => $user]);
@@ -164,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         ':username' => $username,
         ':hash' => $hash
       ]);
+<<<<<<< HEAD
       // Intentar obtener lastInsertId(); si la PK no es auto_increment (por ejemplo UUID), hacer fallback
       $new = false;
       try {
@@ -185,6 +192,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
       if (!$new) {
         throw new Exception("No se pudo crear el usuario.");
       }
+=======
+      $newId = $pdo->lastInsertId();
+      if (!$newId)
+        throw new Exception("No se pudo crear el usuario.");
+      // Obtener el nombre (y id) del usuario recién creado
+      $stNew = $pdo->prepare("SELECT id, nombre FROM perfil_usuario WHERE id = ? LIMIT 1");
+      $stNew->execute([$newId]);
+      $new = $stNew->fetch();
+      if (!$new)
+        throw new Exception("No se pudo recuperar el usuario creado.");
+>>>>>>> e7e90fad002d08f2f3d1b675819258015becfd25
 
       debug('Registro OK', ['uid' => $new['id']]);
       $_SESSION['uid'] = $new['id']; // id
