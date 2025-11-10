@@ -1,19 +1,22 @@
 <?php // catalogo.php
 session_start(); if(!isset($_SESSION['uid'])){ header("Location: index.php"); exit; }
 require_once "db.php";
+
+// Headers para evitar caché y proteger la sesión
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
+
 error_reporting(E_ALL); ini_set('display_errors',1); ini_set('log_errors',1);
 function debugC($m,$c=[]){ error_log('[MarketGO][catalogo] '.$m.(empty($c)?'':' '.json_encode($c))); }
 
-$pdo=(new DB())->pdo(); $uid=$_SESSION['uid'];
+$pdo=getPDO(); $uid=$_SESSION['uid'];
 
 $cat=$_GET['cat']??'Todas';
 $q=trim($_GET['q']??'');
 $min = is_numeric($_GET['min']??'') ? (float)$_GET['min'] : null;
 $max = is_numeric($_GET['max']??'') ? (float)$_GET['max'] : null;
 $ciudad=trim($_GET['ciudad']??'');
-$ulat=isset($_GET['lat'])?floatval($_GET['lat']):null;
-$ulon=isset($_GET['lon'])?floatval($_GET['lon']):null;
-$rad_km=isset($_GET['rad'])?floatval($_GET['rad']):null;
 
 $cad=$pdo->query("SELECT COALESCE((SELECT dias_caducidad FROM politica_publicacion LIMIT 1),90) d")->fetch()['d'] ?? 90;
 
@@ -23,7 +26,7 @@ $sql="SELECT p.id,p.nombre,p.categoria,p.tipo,p.estado,p.ciudad,p.precio,p.image
             p.vendedor_id,
             EXISTS(SELECT 1 FROM producto_guardado g WHERE g.usuario_id=:uid AND g.producto_id=p.id) saved
       FROM producto p
-      WHERE (p.fecha_publicacion IS NULL OR p.fecha_publicacion > now() - ($cad||' days')::interval)
+      WHERE (p.fecha_publicacion IS NULL OR p.fecha_publicacion > DATE_SUB(NOW(), INTERVAL $cad DAY))
         AND NOT EXISTS (
           SELECT 1 FROM incidencia i
           WHERE i.producto_id = p.id
@@ -32,16 +35,23 @@ $sql="SELECT p.id,p.nombre,p.categoria,p.tipo,p.estado,p.ciudad,p.precio,p.image
 $params=[":uid"=>$uid];
 
 if($cat && strtolower($cat)!=='todas'){ $sql.=" AND p.categoria = :cat"; $params[':cat']=$cat; }
-if($q){ $sql.=" AND (p.nombre ILIKE :q OR p.descripcion ILIKE :q OR p.ciudad ILIKE :q OR p.categoria ILIKE :q)"; $params[':q']="%$q%"; }
+if($q){
+  // Use distinct parameter names for each occurrence to avoid driver issues with repeated named params
+  $sql .= " AND (LOWER(p.nombre) LIKE LOWER(:q1) OR LOWER(p.descripcion) LIKE LOWER(:q2) OR LOWER(p.ciudad) LIKE LOWER(:q3) OR LOWER(p.categoria) LIKE LOWER(:q4))";
+  $params[':q1'] = "%$q%";
+  $params[':q2'] = "%$q%";
+  $params[':q3'] = "%$q%";
+  $params[':q4'] = "%$q%";
+}
 if($min!==null){ $sql.=" AND p.precio >= :min"; $params[':min']=$min; }
 if($max!==null){ $sql.=" AND p.precio <= :max"; $params[':max']=$max; }
-if($ciudad){ $sql.=" AND p.ciudad ILIKE :ciu"; $params[':ciu']="%$ciudad%"; }
-if($ulat!==null && $ulon!==null && $rad_km!==null){
-  $sql.=" AND p.geom IS NOT NULL AND ST_DWithin(p.geom::geography, ST_SetSRID(ST_MakePoint(:lon,:lat),4326)::geography, :m )";
-  $params[':lat']=$ulat; $params[':lon']=$ulon; $params[':m']=$rad_km*1000.0;
-}
+if($ciudad){ $sql .= " AND LOWER(p.ciudad) LIKE LOWER(:ciu)"; $params[':ciu'] = "%$ciudad%"; }
 $sql.=" ORDER BY p.creado_en DESC";
-$st=$pdo->prepare($sql); $st->execute($params); $rows=$st->fetchAll();
+$st=$pdo->prepare($sql);
+// debug: log SQL and params to help with binding issues
+debugC('SQL: '.$sql);
+debugC('params: ', $params);
+$st->execute($params); $rows=$st->fetchAll();
 
 $cats = $pdo->query("SELECT 'Todas' AS c UNION SELECT DISTINCT categoria AS c FROM producto WHERE categoria IS NOT NULL AND categoria<>'' ORDER BY c ASC")->fetchAll(PDO::FETCH_COLUMN);
 if(!$cats){ $cats = ['Todas','Electrónica','Hogar','Servicios','Moda','Deportes','Aficiones','Mascotas','Vehículos','Jardín']; }
@@ -81,8 +91,7 @@ label{display:block;font-size:.9rem;color:#556;margin-bottom:6px}
     <a href="catalogo.php">Catálogo</a>
     <a href="panel.php">Mis publicaciones</a>
     <a href="chat_list.php">Mis chats</a>
-    <a href="index.php" onclick="event.preventDefault(); document.getElementById('logout').submit();">Salir</a>
-    <form id="logout" method="post" action="index.php?action=logout" style="display:none"></form>
+    <a href="logout.php" style="color: #e74c3c; font-weight: bold;">Cerrar sesión</a>
   </div>
 </header>
 
@@ -102,11 +111,7 @@ label{display:block;font-size:.9rem;color:#556;margin-bottom:6px}
       <input class="input" name="q" list="cats" placeholder="Buscar por nombre, descripción o categoría..." value="<?= htmlspecialchars($q) ?>">
       <datalist id="cats"><?php foreach($cats as $c) echo "<option value=\"".htmlspecialchars($c)."\">"; ?></datalist>
     </div>
-    <div class="field"><label>Radio (km)</label><input class="input" type="number" step="1" name="rad" id="rad" value="<?= htmlspecialchars($rad_km??'') ?>"></div>
-    <input type="hidden" name="lat" id="lat" value="<?= htmlspecialchars($ulat??'') ?>">
-    <input type="hidden" name="lon" id="lon" value="<?= htmlspecialchars($ulon??'') ?>">
     <div class="field" style="display:flex;gap:8px;align-items:flex-end">
-      <button class="btn" type="button" onclick="getGeo()">📍 Mi ubicación</button>
       <button class="btn btn-primary" type="submit">Filtrar</button>
     </div>
   </form>
@@ -143,15 +148,4 @@ label{display:block;font-size:.9rem;color:#556;margin-bottom:6px}
 </section>
 </main>
 
-<script>
-function getGeo(){
-  if(!navigator.geolocation) return alert('Geolocalización no soportada');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    document.getElementById('lat').value=pos.coords.latitude;
-    document.getElementById('lon').value=pos.coords.longitude;
-    if(!document.getElementById('rad').value) document.getElementById('rad').value=10;
-    alert('Ubicación lista. Pulsa "Filtrar".');
-  }, err=> alert('No se pudo obtener ubicación: '+err.message), {enableHighAccuracy:true,timeout:8000});
-}
-</script>
 </body></html>
