@@ -1,10 +1,14 @@
 <?php // producto_form.php 
 session_start(); if(!isset($_SESSION['uid'])){ header("Location: index.php"); exit; }
+// Headers para evitar caché y proteger la sesión
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 require_once "db.php";
 error_reporting(E_ALL); ini_set('display_errors',1); ini_set('log_errors',1);
 function debugPF($m,$c=[]){ error_log('[MarketGO][prodForm] '.$m.(empty($c)?'':' '.json_encode($c))); }
 
-$pdo=(new DB())->pdo(); $uid=$_SESSION['uid'];
+$pdo = getPDO();; $uid=$_SESSION['uid'];
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if($_SERVER['REQUEST_METHOD']==='POST'){
@@ -32,19 +36,16 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $lon = isset($_POST['lon'])?floatval($_POST['lon']):null;
 
     if($id>0){
-      $sql="UPDATE producto SET codigo=:codigo,nombre=:nombre,descripcion=:desc,tipo=:tipo,precio=:precio,disponibilidad=:disp,categoria=:cat,ciudad=:ciudad,horario_atencion=:horario, imagen_portada_url=COALESCE(:img,imagen_portada_url), actualizado_en=now()".
-           ($lat!==null&&$lon!==null ? ", geom=ST_SetSRID(ST_MakePoint(:lon,:lat),4326)" : "").
-           " WHERE id=:id AND vendedor_id=:v";
+      $sql="UPDATE producto SET codigo=:codigo,nombre=:nombre,descripcion=:desc,tipo=:tipo,precio=:precio,disponibilidad=:disp,categoria=:cat,ciudad=:ciudad,horario_atencion=:horario, imagen_portada_url=COALESCE(:img,imagen_portada_url), actualizado_en=now()
+           WHERE id=:id AND vendedor_id=:v";
       $dataUpd=$data+[':id'=>$id,':v'=>$uid];
-      if($lat!==null&&$lon!==null){ $dataUpd[':lat']=$lat; $dataUpd[':lon']=$lon; }
       $upd=$pdo->prepare($sql); $upd->execute($dataUpd);
     } else {
-      $sql="INSERT INTO producto (vendedor_id,codigo,nombre,descripcion,tipo,precio,disponibilidad,categoria,ciudad,geom,horario_atencion,estado,fecha_publicacion,imagen_portada_url)
-            VALUES (:vendedor,:codigo,:nombre,:desc,:tipo,:precio,:disp,:cat,:ciudad,".($lat!==null&&$lon!==null?"ST_SetSRID(ST_MakePoint(:lon,:lat),4326)":"NULL").",:horario,:estado,now(),:img)
-            RETURNING id";
+      $sql="INSERT INTO producto (vendedor_id,codigo,nombre,descripcion,tipo,precio,disponibilidad,categoria,ciudad,horario_atencion,estado,fecha_publicacion,imagen_portada_url)
+            VALUES (:vendedor,:codigo,:nombre,:desc,:tipo,:precio,:disp,:cat,:ciudad,:horario,:estado,now(),:img)";
       $ins=$pdo->prepare($sql);
-      $dataIns=$data; if($lat!==null&&$lon!==null){ $dataIns[':lat']=$lat; $dataIns[':lon']=$lon; }
-      $ins->execute($dataIns); $id=$ins->fetchColumn();
+      $dataIns=$data;
+      $ins->execute($dataIns); $id=$pdo->lastInsertId();
     }
 
     // SUBIR imágenes (1 a 5)
@@ -60,7 +61,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
           $ext  = pathinfo($orig,PATHINFO_EXTENSION);
           $file = 'uploads/'.date('Ymd_His').'_'.$uid.'_'.$i.'.'.preg_replace('/[^a-z0-9]+/i','',$ext);
           if(move_uploaded_file($tmp,__DIR__.'/'.$file)){
-            $pdo->prepare("INSERT INTO producto_imagen (producto_id,url,orden) VALUES (?,?,?) ON CONFLICT (producto_id,orden) DO UPDATE SET url=EXCLUDED.url")->execute([$id,$file,$orden]);
+            $pdo->prepare("INSERT INTO producto_imagen (producto_id,url,orden) VALUES (?,?,?) ON DUPLICATE KEY UPDATE url=VALUES(url)")->execute([$id,$file,$orden]);
             if($orden===1){ $pdo->prepare("UPDATE producto SET imagen_portada_url=? WHERE id=?")->execute([$file,$id]); }
             $fileNames[] = strtolower($orig);
             $orden++;
@@ -179,15 +180,6 @@ input,select,textarea{width:100%;padding:10px 12px;border:1px solid #E0E7F0;bord
 
         <div class="grid">
           <label>Fotos (hasta 5) <input type="file" name="fotos[]" accept="image/*" multiple></label>
-          <div>
-            <label>Ubicación
-              <div style="display:flex;gap:8px">
-                <input id="lat" name="lat" placeholder="lat" value="">
-                <input id="lon" name="lon" placeholder="lon" value="">
-                <button class="btn" type="button" onclick="getGeo()">📍</button>
-              </div>
-            </label>
-          </div>
         </div>
 
         <?php if($imgs): ?>
@@ -206,13 +198,4 @@ input,select,textarea{width:100%;padding:10px 12px;border:1px solid #E0E7F0;bord
     </div>
   </div>
 </div>
-<script>
-function getGeo(){
-  if(!navigator.geolocation) return alert('Geolocalización no soportada');
-  navigator.geolocation.getCurrentPosition(p=>{
-    document.getElementById('lat').value=p.coords.latitude;
-    document.getElementById('lon').value=p.coords.longitude;
-  }, e=>alert('Geo error: '+e.message), {enableHighAccuracy:true,timeout:8000});
-}
-</script>
 </body></html>
