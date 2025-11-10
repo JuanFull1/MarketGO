@@ -4,7 +4,7 @@ require_once "db.php";
 error_reporting(E_ALL); ini_set('display_errors',1); ini_set('log_errors',1);
 function debugC($m,$c=[]){ error_log('[MarketGO][catalogo] '.$m.(empty($c)?'':' '.json_encode($c))); }
 
-$pdo=(new DB())->pdo(); $uid=$_SESSION['uid'];
+$pdo=getPDO(); $uid=$_SESSION['uid'];
 
 $cat=$_GET['cat']??'Todas';
 $q=trim($_GET['q']??'');
@@ -23,7 +23,7 @@ $sql="SELECT p.id,p.nombre,p.categoria,p.tipo,p.estado,p.ciudad,p.precio,p.image
             p.vendedor_id,
             EXISTS(SELECT 1 FROM producto_guardado g WHERE g.usuario_id=:uid AND g.producto_id=p.id) saved
       FROM producto p
-      WHERE (p.fecha_publicacion IS NULL OR p.fecha_publicacion > now() - ($cad||' days')::interval)
+      WHERE (p.fecha_publicacion IS NULL OR p.fecha_publicacion > DATE_SUB(NOW(), INTERVAL $cad DAY))
         AND NOT EXISTS (
           SELECT 1 FROM incidencia i
           WHERE i.producto_id = p.id
