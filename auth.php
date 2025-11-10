@@ -59,7 +59,8 @@ try {
       'femenino' => 'femenino',
       'prefiero_no_decirlo' => 'prefiero_no_decirlo'
     ];
-    $genero = $mapGenero[$generoSel] ?? null;
+      // Usar la función getPDO() definida en db.php (MySQL / PDO)
+      $pdo = getPDO();
 
     // username único basado en email o nombre+apellido
     $baseUsername = strstr($email, '@', true) ?: preg_replace('/\s+/', '', strtolower($nombre . $apellido));
@@ -99,7 +100,7 @@ try {
       ':username' => $username,
       ':hash' => $hash
     ]);
-    $new = $ins->fetch();
+        $chk = $pdo->prepare("SELECT 1 FROM perfil_usuario WHERE username = ? LIMIT 1");
     if (!$new) throw new Exception('No se pudo crear el usuario.');
 
     // Autologin
