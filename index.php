@@ -150,27 +150,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
         ':username' => $username,
         ':hash' => $hash
       ]);
-      // Intentar obtener lastInsertId(); si la PK no es auto_increment (por ejemplo UUID), hacer fallback
-      $new = false;
-      try {
-        $newId = $pdo->lastInsertId();
-        if (!empty($newId)) {
-          $stNew = $pdo->prepare("SELECT id, nombre FROM perfil_usuario WHERE id = ? LIMIT 1");
-          $stNew->execute([$newId]);
-          $new = $stNew->fetch();
-        }
-      } catch (Throwable $e) {
-        // ignore, iremos al fallback
-      }
-      if (!$new) {
-        // Fallback: buscar por username (o correo) que deben ser únicos
-        $stNew = $pdo->prepare("SELECT id, nombre FROM perfil_usuario WHERE username = ? OR correo = ? LIMIT 1");
-        $stNew->execute([$username, $email]);
-        $new = $stNew->fetch();
-      }
-      if (!$new) {
+      $newId = $pdo->lastInsertId();
+      if (!$newId)
         throw new Exception("No se pudo crear el usuario.");
-      }
+      // Obtener el nombre (y id) del usuario recién creado
+      $stNew = $pdo->prepare("SELECT id, nombre FROM perfil_usuario WHERE id = ? LIMIT 1");
+      $stNew->execute([$newId]);
+      $new = $stNew->fetch();
+      if (!$new)
+        throw new Exception("No se pudo recuperar el usuario creado.");
 
       debug('Registro OK', ['uid' => $new['id']]);
       $_SESSION['uid'] = $new['id']; // id
