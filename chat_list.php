@@ -1,5 +1,9 @@
 <?php
 session_start(); if(!isset($_SESSION['uid'])){ header("Location: index.php"); exit; }
+// Headers para evitar caché y proteger la sesión
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 require_once "db.php"; error_reporting(E_ALL); ini_set('display_errors',1); ini_set('log_errors',1);
 $pdo=(new DB())->pdo(); $uid=$_SESSION['uid'];
 $conv=$pdo->prepare("SELECT c.*, p.nombre producto_nombre FROM conversacion c LEFT JOIN producto p ON p.id=c.producto_id WHERE c.comprador_id=:u OR c.vendedor_id=:u ORDER BY c.actualizada_en DESC");
