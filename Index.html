@@ -18,18 +18,19 @@
     </header>
 
     <main class="hero">
+        <div class="hero-background">
+            <img class="hero-cover" src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80" alt="Mercado local - compra y venta" />
+            <div class="hero-overlay"></div>
+        </div>
         <div class="container hero-inner">
             <div class="hero-content">
+                <div class="hero-badge">Crea tu propia tienda online</div>
                 <h2 class="hero-title">Compra y vende cerca de ti</h2>
                 <p class="hero-sub">Explora productos, chatea con vendedores y administra tus ventas — todo en un solo lugar.</p>
                 <div class="hero-cta">
-                    <button class="btn btn-primary" id="hero-register">Comenzar</button>
-                    <a class="link-ghost" id="hero-learn">¿Cómo funciona?</a>
+                    <button class="btn btn-light" id="hero-register">Pruébalo gratis</button>
+                    <button class="btn btn-outline-light" id="hero-learn">¿Cómo funciona?</button>
                 </div>
-            </div>
-            <div class="hero-illustration" aria-hidden="false">
-                <!-- Imagen de portada relacionada con marketplace -->
-                <img class="hero-cover" src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80" alt="Mercado local - compra y venta" />
             </div>
         </div>
     </main>
@@ -108,6 +109,11 @@
         setupModal('open-login', 'modal-login');
         setupModal('open-register', 'modal-register');
         setupModal('hero-register', 'modal-register');
+
+        // Botón "¿Cómo funciona?" en la portada
+        document.getElementById('hero-learn').addEventListener('click', function() {
+            alert('Aquí irá información sobre cómo funciona MarketGO');
+        });
 
         // Prevención simple en envíos (solo muestra alert) — puedes reemplazar con lógica real
         document.getElementById('form-login').addEventListener('submit', function(e){
